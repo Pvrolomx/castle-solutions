@@ -1,7 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-// import Image from 'next/image';
+import { UploadButton } from '@/lib/uploadthing';
+import '@uploadthing/react/styles.css';
+
+interface Document {
+  id: string;
+  clientId: string;
+  docType: string;
+  filename: string;
+  url: string;
+}
 
 interface Client {
   id: string;
@@ -10,6 +19,7 @@ interface Client {
   email: string | null;
   notes: string | null;
   properties: Property[];
+  documents?: Document[];
 }
 
 interface Property {
@@ -26,6 +36,15 @@ interface Property {
   client?: Client;
 }
 
+const DOC_TYPES = [
+  { value: 'pasaporte', label: 'Pasaporte' },
+  { value: 'ine', label: 'INE/ID' },
+  { value: 'contrato', label: 'Contrato' },
+  { value: 'escrituras', label: 'Escrituras' },
+  { value: 'comprobante', label: 'Comprobante Domicilio' },
+  { value: 'otro', label: 'Otro' },
+];
+
 export default function Home() {
   const [clients, setClients] = useState<Client[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -36,6 +55,9 @@ export default function Home() {
   const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [showDocUpload, setShowDocUpload] = useState(false);
+  const [docType, setDocType] = useState('pasaporte');
+  const [clientDocs, setClientDocs] = useState<Document[]>([]);
 
   const [clientData, setClientData] = useState({ name: '', phone: '', email: '', notes: '' });
   const [propertyData, setPropertyData] = useState({
@@ -54,12 +76,26 @@ export default function Home() {
     setLoading(false);
   };
 
+  const loadClientDocs = async (clientId: string) => {
+    const res = await fetch(`/api/documents?clientId=${clientId}`);
+    const docs = await res.json();
+    setClientDocs(docs);
+  };
+
   useEffect(() => { loadData(); }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => { loadData(search); }, 300);
     return () => clearTimeout(timer);
   }, [search]);
+
+  useEffect(() => {
+    if (selectedClient) {
+      loadClientDocs(selectedClient.id);
+    } else {
+      setClientDocs([]);
+    }
+  }, [selectedClient]);
 
   const createClient = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,8 +124,34 @@ export default function Home() {
     loadData(search);
   };
 
+  const saveDocument = async (url: string, filename: string) => {
+    if (!selectedClient) return;
+    await fetch('/api/documents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        clientId: selectedClient.id,
+        docType,
+        filename,
+        url,
+      }),
+    });
+    loadClientDocs(selectedClient.id);
+    setShowDocUpload(false);
+  };
+
+  const deleteDocument = async (docId: string) => {
+    if (!confirm('¿Eliminar este documento?')) return;
+    await fetch(`/api/documents?id=${docId}`, { method: 'DELETE' });
+    if (selectedClient) loadClientDocs(selectedClient.id);
+  };
+
   const parsePhones = (phones: string): string[] => {
     try { return JSON.parse(phones); } catch { return [phones]; }
+  };
+
+  const getDocTypeLabel = (type: string) => {
+    return DOC_TYPES.find(d => d.value === type)?.label || type;
   };
 
   if (loading) return (
@@ -103,9 +165,7 @@ export default function Home() {
       {/* Header */}
       <header className="bg-white border-b border-stone-200 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl font-semibold tracking-wide">CASTLE <span className="text-amber-600 font-light">solutions</span></span>
-          </div>
+          <span className="text-2xl font-semibold tracking-wide">CASTLE <span className="text-amber-600 font-light">solutions</span></span>
           <div className="flex gap-2">
             <button onClick={() => setShowClientForm(true)} className="bg-stone-800 text-white px-4 py-2 rounded hover:bg-stone-700">+ Cliente</button>
             <button onClick={() => setShowPropertyForm(true)} className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700">+ Propiedad</button>
@@ -116,23 +176,13 @@ export default function Home() {
       <main className="max-w-6xl mx-auto p-6">
         {/* Search */}
         <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Buscar cliente, propiedad, direccion, notas..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-4 py-3 text-lg border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-          />
+          <input type="text" placeholder="Buscar cliente, propiedad, direccion, notas..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full px-4 py-3 text-lg border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
         </div>
 
         {/* Tabs */}
         <div className="flex gap-4 mb-6">
-          <button onClick={() => setView('clients')} className={`px-6 py-2 rounded-lg font-medium ${view === 'clients' ? 'bg-stone-800 text-white' : 'bg-white text-stone-600 border'}`}>
-            Clientes ({clients.length})
-          </button>
-          <button onClick={() => setView('properties')} className={`px-6 py-2 rounded-lg font-medium ${view === 'properties' ? 'bg-amber-600 text-white' : 'bg-white text-stone-600 border'}`}>
-            Propiedades ({properties.length})
-          </button>
+          <button onClick={() => setView('clients')} className={`px-6 py-2 rounded-lg font-medium ${view === 'clients' ? 'bg-stone-800 text-white' : 'bg-white text-stone-600 border'}`}>Clientes ({clients.length})</button>
+          <button onClick={() => setView('properties')} className={`px-6 py-2 rounded-lg font-medium ${view === 'properties' ? 'bg-amber-600 text-white' : 'bg-white text-stone-600 border'}`}>Propiedades ({properties.length})</button>
         </div>
 
         {/* Client Form Modal */}
@@ -200,23 +250,41 @@ export default function Home() {
         {/* Client Detail Modal */}
         {selectedClient && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedClient(null)}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
               <h2 className="text-2xl font-semibold mb-2">{selectedClient.name}</h2>
               <div className="space-y-3 mb-4">
                 {parsePhones(selectedClient.phones).map((phone, i) => (
-                  <a key={i} href={`tel:${phone}`} className="flex items-center gap-2 text-stone-700 hover:text-amber-600">
-                    <span>📞</span> {phone}
-                  </a>
+                  <a key={i} href={`tel:${phone}`} className="flex items-center gap-2 text-stone-700 hover:text-amber-600">📞 {phone}</a>
                 ))}
-                {selectedClient.email && (
-                  <a href={`mailto:${selectedClient.email}`} className="flex items-center gap-2 text-stone-700 hover:text-amber-600">
-                    <span>✉️</span> {selectedClient.email}
-                  </a>
-                )}
+                {selectedClient.email && <a href={`mailto:${selectedClient.email}`} className="flex items-center gap-2 text-stone-700 hover:text-amber-600">✉️ {selectedClient.email}</a>}
               </div>
               {selectedClient.notes && <p className="text-stone-600 bg-stone-50 p-3 rounded mb-4">{selectedClient.notes}</p>}
+              
+              {/* Documents Section */}
+              <div className="border-t pt-4 mb-4">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-medium">📄 Documentos ({clientDocs.length})</h3>
+                  <button onClick={() => setShowDocUpload(true)} className="text-sm bg-amber-100 text-amber-700 px-3 py-1 rounded hover:bg-amber-200">+ Subir</button>
+                </div>
+                {clientDocs.length === 0 ? (
+                  <p className="text-sm text-stone-400">Sin documentos</p>
+                ) : (
+                  <div className="space-y-2">
+                    {clientDocs.map(doc => (
+                      <div key={doc.id} className="flex items-center justify-between bg-stone-50 p-2 rounded">
+                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="flex-1 text-amber-600 hover:text-amber-700">
+                          <span className="text-xs bg-stone-200 px-2 py-1 rounded mr-2">{getDocTypeLabel(doc.docType)}</span>
+                          {doc.filename}
+                        </a>
+                        <button onClick={() => deleteDocument(doc.id)} className="text-red-400 hover:text-red-600 ml-2">✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div>
-                <h3 className="font-medium mb-2">Propiedades ({selectedClient.properties.length})</h3>
+                <h3 className="font-medium mb-2">🏠 Propiedades ({selectedClient.properties.length})</h3>
                 {selectedClient.properties.map(p => (
                   <div key={p.id} className="border rounded p-3 mb-2">
                     <p className="font-medium">{p.name}</p>
@@ -229,15 +297,43 @@ export default function Home() {
           </div>
         )}
 
+        {/* Document Upload Modal */}
+        {showDocUpload && selectedClient && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]" onClick={() => setShowDocUpload(false)}>
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+              <h2 className="text-xl font-semibold mb-4">Subir Documento</h2>
+              <p className="text-sm text-stone-500 mb-4">Cliente: {selectedClient.name}</p>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Tipo de documento</label>
+                <select value={docType} onChange={e => setDocType(e.target.value)} className="w-full border rounded p-2">
+                  {DOC_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+              </div>
+              <div className="mb-4">
+                <UploadButton
+                  endpoint="documentUploader"
+                  onClientUploadComplete={(res) => {
+                    if (res && res[0]) {
+                      saveDocument(res[0].url, res[0].name);
+                    }
+                  }}
+                  onUploadError={(error: Error) => {
+                    alert(`Error: ${error.message}`);
+                  }}
+                />
+              </div>
+              <button onClick={() => setShowDocUpload(false)} className="w-full bg-stone-200 py-2 rounded hover:bg-stone-300">Cancelar</button>
+            </div>
+          </div>
+        )}
+
         {/* Property Detail Modal */}
         {selectedProperty && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedProperty(null)}>
             <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
               <h2 className="text-2xl font-semibold mb-1">{selectedProperty.name}</h2>
               <p className="text-stone-500 mb-4">{selectedProperty.propertyType} · {selectedProperty.regime}</p>
-              <a href={`https://maps.google.com/?q=${encodeURIComponent(selectedProperty.address)}`} target="_blank" className="flex items-center gap-2 text-amber-600 hover:text-amber-700 mb-4">
-                <span>📍</span> {selectedProperty.address}
-              </a>
+              <a href={`https://maps.google.com/?q=${encodeURIComponent(selectedProperty.address)}`} target="_blank" className="flex items-center gap-2 text-amber-600 hover:text-amber-700 mb-4">📍 {selectedProperty.address}</a>
               {selectedProperty.client && (
                 <div className="bg-stone-50 p-3 rounded mb-4">
                   <p className="text-sm text-stone-500">Propietario</p>

@@ -10,30 +10,29 @@ datasource db {
 model Client {
   id          String     @id @default(cuid())
   name        String
-  phones      String     // JSON array for multiple phones
+  phones      String
   email       String?
   notes       String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   
   properties  Property[]
+  documents   Document[]
 }
 
 model Property {
   id                    String   @id @default(cuid())
-  name                  String   // Alias o nombre de la propiedad
+  name                  String
   address               String
   clientId              String
-  propertyType          String   @default("casa") // casa, departamento, local, otro
-  regime                String   @default("independiente") // independiente, condominio
+  propertyType          String   @default("casa")
+  regime                String   @default("independiente")
   
-  // Campos condominio (nullable)
   condoName             String?
   condoAdminName        String?
   condoAdminPhone       String?
   condoFee              String?
   
-  // Campos generales
   notes                 String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
@@ -43,4 +42,18 @@ model Property {
   @@index([clientId])
   @@index([name])
   @@index([regime])
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  clientId    String
+  docType     String   // pasaporte, ine, contrato, escrituras, otro
+  filename    String
+  url         String
+  createdAt   DateTime @default(now())
+  
+  client      Client   @relation(fields: [clientId], references: [id])
+  
+  @@index([clientId])
+  @@index([docType])
 }
