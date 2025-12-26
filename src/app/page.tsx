@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { UploadButton } from '@/lib/uploadthing';
 import '@uploadthing/react/styles.css';
 
@@ -165,7 +166,7 @@ export default function Home() {
       {/* Header */}
       <header className="bg-white border-b border-stone-200 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <span className="text-2xl font-semibold tracking-wide">CASTLE <span className="text-amber-600 font-light">solutions</span></span>
+          <Image src="/logo.png" alt="Castle Solutions" width={180} height={50} className="h-12 w-auto" />
           <div className="flex gap-2">
             <button onClick={() => setShowClientForm(true)} className="bg-stone-800 text-white px-4 py-2 rounded hover:bg-stone-700">+ Cliente</button>
             <button onClick={() => setShowPropertyForm(true)} className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700">+ Propiedad</button>
