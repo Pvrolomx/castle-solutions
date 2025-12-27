@@ -38,10 +38,23 @@ model Property {
   updatedAt             DateTime @updatedAt
   
   client                Client   @relation(fields: [clientId], references: [id])
+  photos                Photo[]
   
   @@index([clientId])
   @@index([name])
   @@index([regime])
+}
+
+model Photo {
+  id          String   @id @default(cuid())
+  propertyId  String
+  url         String
+  caption     String?
+  createdAt   DateTime @default(now())
+  
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  @@index([propertyId])
 }
 
 model Document {
@@ -66,7 +79,7 @@ model Contact {
   name        String
   phones      String
   email       String?
-  category    String     @default("familia") // familia, amigos, contactos, etc.
+  category    String     @default("familia")
   birthday    String?
   address     String?
   notes       String?
