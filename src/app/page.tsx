@@ -158,6 +158,11 @@ export default function Home() {
     if (selectedProperty) loadPropertyPhotos(selectedProperty.id);
   };
 
+  const shareViaWhatsApp = (url: string, type: string, name: string) => {
+    const message = encodeURIComponent(`${type}: ${name}\n${url}`);
+    window.open(`https://wa.me/?text=${message}`, '_blank');
+  };
+
   useEffect(() => { loadData(); }, []);
 
   useEffect(() => {
@@ -527,7 +532,10 @@ export default function Home() {
                           <span className="text-xs bg-stone-200 px-2 py-1 rounded mr-2">{getDocTypeLabel(doc.docType)}</span>
                           {doc.filename}
                         </a>
-                        <button onClick={() => deleteDocument(doc.id)} className="text-red-400 hover:text-red-600 ml-2">✕</button>
+                        <div className="flex gap-1 ml-2">
+                          <button onClick={() => shareViaWhatsApp(doc.url, getDocTypeLabel(doc.docType), doc.filename)} className="text-green-500 hover:text-green-600">↗</button>
+                          <button onClick={() => deleteDocument(doc.id)} className="text-red-400 hover:text-red-600">✕</button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -621,8 +629,11 @@ export default function Home() {
                   <div className="grid grid-cols-2 gap-2">
                     {propertyPhotos.map(photo => (
                       <div key={photo.id} className="relative group">
-                        <img src={photo.url} alt="Propiedad" className="w-full h-24 object-cover rounded" />
-                        <button onClick={() => deletePhoto(photo.id)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 text-xs opacity-0 group-hover:opacity-100 transition">✕</button>
+                        <img src={photo.url} alt="Propiedad" className="w-full h-24 object-cover rounded cursor-pointer" onClick={() => window.open(photo.url, '_blank')} />
+                        <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                          <button onClick={() => shareViaWhatsApp(photo.url, 'Foto', selectedProperty?.name || '')} className="bg-green-500 text-white rounded-full w-6 h-6 text-xs">↗</button>
+                          <button onClick={() => deletePhoto(photo.id)} className="bg-red-500 text-white rounded-full w-6 h-6 text-xs">✕</button>
+                        </div>
                       </div>
                     ))}
                   </div>
