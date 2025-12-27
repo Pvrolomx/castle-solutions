@@ -1,20 +1,24 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import AuthProvider from '@/components/AuthProvider';
+
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "Castle Solutions",
-  description: "Administracion de propiedades",
+  title: 'CASTLE solutions',
+  description: 'Administración de propiedades',
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="es">
-      <body className="bg-gray-50 min-h-screen">
-        <main>{children}</main>
+      <body className={inter.className}>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

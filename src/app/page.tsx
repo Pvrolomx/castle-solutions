@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 import { jsPDF } from 'jspdf';
 
 import { UploadButton } from '@/lib/uploadthing';
@@ -76,6 +77,7 @@ const CONTACT_CATEGORIES = [
 
 
 export default function Home() {
+  const { data: session } = useSession();
   const [clients, setClients] = useState<Client[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
