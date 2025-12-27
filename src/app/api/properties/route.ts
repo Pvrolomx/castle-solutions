@@ -43,3 +43,12 @@ export async function POST(request: Request) {
   });
   return NextResponse.json(property);
 }
+
+
+export async function DELETE(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
+  await prisma.property.delete({ where: { id } });
+  return NextResponse.json({ success: true });
+}

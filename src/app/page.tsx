@@ -199,6 +199,28 @@ export default function Home() {
     if (selectedClient) loadClientDocs(selectedClient.id);
   };
 
+  const deleteClient = async (clientId: string) => {
+    if (!confirm('¿Eliminar este cliente y todas sus propiedades?')) return;
+    await fetch(`/api/clients?id=${clientId}`, { method: 'DELETE' });
+    setSelectedClient(null);
+    loadData(search);
+  };
+
+  const deleteProperty = async (propertyId: string) => {
+    if (!confirm('¿Eliminar esta propiedad?')) return;
+    await fetch(`/api/properties?id=${propertyId}`, { method: 'DELETE' });
+    setSelectedProperty(null);
+    loadData(search);
+  };
+
+  const deleteContact = async (contactId: string) => {
+    if (!confirm('¿Eliminar este contacto?')) return;
+    await fetch(`/api/contacts?id=${contactId}`, { method: 'DELETE' });
+    setSelectedContact(null);
+    loadData(search);
+  };
+
+
   const parsePhones = (phones: string): string[] => {
     try { return JSON.parse(phones); } catch { return [phones]; }
   };
@@ -371,7 +393,10 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <button onClick={() => setSelectedClient(null)} className="w-full mt-4 bg-stone-200 py-2 rounded hover:bg-stone-300">Cerrar</button>
+              <div className="flex gap-2 mt-4">
+                <button onClick={() => setSelectedClient(null)} className="flex-1 bg-stone-200 py-2 rounded hover:bg-stone-300">Cerrar</button>
+                <button onClick={() => deleteClient(selectedClient.id)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Eliminar</button>
+              </div>
             </div>
           </div>
         )}
@@ -432,7 +457,10 @@ export default function Home() {
                 </div>
               )}
               {selectedProperty.notes && <p className="text-stone-600 bg-stone-50 p-3 rounded mb-4">{selectedProperty.notes}</p>}
-              <button onClick={() => setSelectedProperty(null)} className="w-full mt-4 bg-stone-200 py-2 rounded hover:bg-stone-300">Cerrar</button>
+              <div className="flex gap-2 mt-4">
+                <button onClick={() => setSelectedProperty(null)} className="flex-1 bg-stone-200 py-2 rounded hover:bg-stone-300">Cerrar</button>
+                <button onClick={() => deleteProperty(selectedProperty.id)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Eliminar</button>
+              </div>
             </div>
           </div>
         )}
@@ -514,7 +542,10 @@ export default function Home() {
                 {selectedContact.address && <p className="text-stone-600">📍 {selectedContact.address}</p>}
               </div>
               {selectedContact.notes && <p className="text-stone-600 bg-stone-50 p-3 rounded mb-4">{selectedContact.notes}</p>}
-              <button onClick={() => setSelectedContact(null)} className="w-full mt-4 bg-stone-200 py-2 rounded hover:bg-stone-300">Cerrar</button>
+              <div className="flex gap-2 mt-4">
+                <button onClick={() => setSelectedContact(null)} className="flex-1 bg-stone-200 py-2 rounded hover:bg-stone-300">Cerrar</button>
+                <button onClick={() => deleteContact(selectedContact.id)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Eliminar</button>
+              </div>
             </div>
           </div>
         )}

@@ -44,3 +44,13 @@ export async function POST(request: Request) {
   });
   return NextResponse.json(contact);
 }
+
+
+export async function DELETE(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
+  await prisma.document.deleteMany({ where: { contactId: id } });
+  await prisma.contact.delete({ where: { id } });
+  return NextResponse.json({ success: true });
+}
