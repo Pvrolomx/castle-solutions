@@ -44,6 +44,26 @@ export async function POST(request: Request) {
   return NextResponse.json(property);
 }
 
+export async function PUT(request: Request) {
+  const data = await request.json();
+  const property = await prisma.property.update({
+    where: { id: data.id },
+    data: {
+      name: data.name,
+      address: data.address,
+      clientId: data.clientId,
+      propertyType: data.propertyType,
+      regime: data.regime,
+      condoName: data.condoName || null,
+      condoAdminName: data.condoAdminName || null,
+      condoAdminPhone: data.condoAdminPhone || null,
+      condoFee: data.condoFee || null,
+      notes: data.notes || null,
+    },
+    include: { client: true },
+  });
+  return NextResponse.json(property);
+}
 
 export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);

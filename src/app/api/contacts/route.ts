@@ -45,6 +45,23 @@ export async function POST(request: Request) {
   return NextResponse.json(contact);
 }
 
+export async function PUT(request: Request) {
+  const data = await request.json();
+  const contact = await prisma.contact.update({
+    where: { id: data.id },
+    data: {
+      name: data.name,
+      phones: JSON.stringify(data.phones || [data.phone]),
+      email: data.email || null,
+      category: data.category,
+      birthday: data.birthday || null,
+      address: data.address || null,
+      notes: data.notes || null,
+    },
+    include: { documents: true },
+  });
+  return NextResponse.json(contact);
+}
 
 export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);

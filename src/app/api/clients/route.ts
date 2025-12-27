@@ -36,6 +36,20 @@ export async function POST(request: Request) {
   return NextResponse.json(client);
 }
 
+export async function PUT(request: Request) {
+  const data = await request.json();
+  const client = await prisma.client.update({
+    where: { id: data.id },
+    data: {
+      name: data.name,
+      phones: JSON.stringify(data.phones || [data.phone]),
+      email: data.email || null,
+      notes: data.notes || null,
+    },
+    include: { properties: true },
+  });
+  return NextResponse.json(client);
+}
 
 export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
