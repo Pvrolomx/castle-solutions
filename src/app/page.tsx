@@ -242,9 +242,9 @@ export default function Home() {
         <div className="max-w-6xl mx-auto flex flex-col items-center gap-4">
           <img src="/logo.png" alt="Castle Solutions" className="h-14 w-auto" />
           <div className="flex gap-2 justify-center">
-            <button onClick={() => setShowClientForm(true)} className="bg-stone-800 text-white px-4 py-2 rounded hover:bg-stone-700">+ Cliente</button>
-            <button onClick={() => setShowPropertyForm(true)} className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700">+ Propiedad</button>
-            <button onClick={() => setShowContactForm(true)} className="bg-rose-600 text-white px-4 py-2 rounded hover:bg-rose-700">+ Familia</button>
+            <button onClick={() => setView('clients')} className={`px-5 py-2 rounded font-medium transition ${view === 'clients' ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'}`}>Clientes</button>
+            <button onClick={() => setView('properties')} className={`px-5 py-2 rounded font-medium transition ${view === 'properties' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}>Propiedades</button>
+            <button onClick={() => setView('familia')} className={`px-5 py-2 rounded font-medium transition ${view === 'familia' ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-700 hover:bg-rose-200'}`}>Familia</button>
           </div>
         </div>
       </header>
@@ -255,12 +255,7 @@ export default function Home() {
           <input type="text" placeholder="Buscar cliente, propiedad, direccion, notas..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full px-4 py-3 text-lg border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-4 mb-6">
-          <button onClick={() => setView('clients')} className={`px-6 py-2 rounded-lg font-medium ${view === 'clients' ? 'bg-stone-800 text-white' : 'bg-white text-stone-600 border'}`}>Clientes ({clients.length})</button>
-          <button onClick={() => setView('properties')} className={`px-6 py-2 rounded-lg font-medium ${view === 'properties' ? 'bg-amber-600 text-white' : 'bg-white text-stone-600 border'}`}>Propiedades ({properties.length})</button>
-          <button onClick={() => setView('familia')} className={`px-6 py-2 rounded-lg font-medium ${view === 'familia' ? 'bg-rose-600 text-white' : 'bg-white text-stone-600 border'}`}>Familia ({contacts.length})</button>
-        </div>
+
 
         {/* Client Form Modal */}
         {showClientForm && (
@@ -468,8 +463,9 @@ export default function Home() {
         {/* Lists */}
         {view === 'clients' && (
           <div className="grid gap-4">
+            <button onClick={() => setShowClientForm(true)} className="w-full py-3 border-2 border-dashed border-stone-300 rounded-lg text-stone-500 hover:border-stone-400 hover:text-stone-600 transition">+ Nuevo Cliente</button>
             {clients.length === 0 ? (
-              <div className="text-center text-stone-400 py-12">No hay clientes. Crea el primero.</div>
+              <div className="text-center text-stone-400 py-8">No hay clientes aún.</div>
             ) : clients.map(client => (
               <div key={client.id} onClick={() => setSelectedClient(client)} className="bg-white rounded-lg shadow p-4 hover:shadow-md cursor-pointer transition">
                 <div className="flex justify-between items-start">
@@ -487,8 +483,9 @@ export default function Home() {
 
         {view === 'properties' && (
           <div className="grid gap-4">
+            <button onClick={() => setShowPropertyForm(true)} className="w-full py-3 border-2 border-dashed border-amber-300 rounded-lg text-amber-500 hover:border-amber-400 hover:text-amber-600 transition">+ Nueva Propiedad</button>
             {properties.length === 0 ? (
-              <div className="text-center text-stone-400 py-12">No hay propiedades. Crea la primera.</div>
+              <div className="text-center text-stone-400 py-8">No hay propiedades aún.</div>
             ) : properties.map(property => (
               <div key={property.id} onClick={() => setSelectedProperty(property)} className="bg-white rounded-lg shadow p-4 hover:shadow-md cursor-pointer transition">
                 <div className="flex justify-between items-start">
@@ -509,8 +506,9 @@ export default function Home() {
 
         {view === 'familia' && (
           <div className="grid gap-4">
+            <button onClick={() => setShowContactForm(true)} className="w-full py-3 border-2 border-dashed border-rose-300 rounded-lg text-rose-500 hover:border-rose-400 hover:text-rose-600 transition">+ Nuevo Contacto</button>
             {contacts.length === 0 ? (
-              <div className="text-center text-stone-400 py-12">No hay contactos. Crea el primero.</div>
+              <div className="text-center text-stone-400 py-8">No hay contactos aún.</div>
             ) : contacts.map(contact => (
               <div key={contact.id} onClick={() => setSelectedContact(contact)} className="bg-white rounded-lg shadow p-4 hover:shadow-md cursor-pointer transition">
                 <div className="flex justify-between items-start">
