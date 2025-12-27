@@ -46,14 +46,35 @@ model Property {
 
 model Document {
   id          String   @id @default(cuid())
-  clientId    String
-  docType     String   // pasaporte, ine, contrato, escrituras, otro
+  clientId    String?
+  contactId   String?
+  docType     String
   filename    String
   url         String
   createdAt   DateTime @default(now())
   
-  client      Client   @relation(fields: [clientId], references: [id])
+  client      Client?   @relation(fields: [clientId], references: [id])
+  contact     Contact?  @relation(fields: [contactId], references: [id])
   
   @@index([clientId])
+  @@index([contactId])
   @@index([docType])
+}
+
+model Contact {
+  id          String     @id @default(cuid())
+  name        String
+  phones      String
+  email       String?
+  category    String     @default("familia") // familia, amigos, contactos, etc.
+  birthday    String?
+  address     String?
+  notes       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  documents   Document[]
+  
+  @@index([category])
+  @@index([name])
 }

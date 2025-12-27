@@ -45,15 +45,38 @@ const DOC_TYPES = [
   { value: 'comprobante', label: 'Comprobante Domicilio' },
   { value: 'otro', label: 'Otro' },
 ];
+interface Contact {
+  id: string;
+  name: string;
+  phones: string;
+  email: string | null;
+  category: string;
+  birthday: string | null;
+  address: string | null;
+  notes: string | null;
+  documents?: Document[];
+}
+
+const CONTACT_CATEGORIES = [
+  { value: 'familia', label: 'Familia' },
+  { value: 'amigos', label: 'Amigos' },
+  { value: 'contactos', label: 'Contactos' },
+  { value: 'otro', label: 'Otro' },
+];
+
 
 export default function Home() {
   const [clients, setClients] = useState<Client[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<'clients' | 'properties'>('clients');
+  const [view, setView] = useState<'clients' | 'properties' | 'familia'>('clients');
   const [showClientForm, setShowClientForm] = useState(false);
   const [showPropertyForm, setShowPropertyForm] = useState(false);
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [, setContactDocs] = useState<Document[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [showDocUpload, setShowDocUpload] = useState(false);
@@ -65,15 +88,18 @@ export default function Home() {
     name: '', address: '', clientId: '', propertyType: 'casa', regime: 'independiente',
     condoName: '', condoAdminName: '', condoAdminPhone: '', condoFee: '', notes: ''
   });
+  const [contactData, setContactData] = useState({ name: '', phone: '', email: '', category: 'familia', birthday: '', address: '', notes: '' });
 
   const loadData = async (searchTerm = '') => {
     const query = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : '';
-    const [clientsRes, propsRes] = await Promise.all([
+    const [clientsRes, propsRes, contactsRes] = await Promise.all([
       fetch(`/api/clients${query}`),
-      fetch(`/api/properties${query}`)
+      fetch(`/api/properties${query}`),
+      fetch(`/api/contacts${query}`)
     ]);
     setClients(await clientsRes.json());
     setProperties(await propsRes.json());
+    setContacts(await contactsRes.json());
     setLoading(false);
   };
 
@@ -81,6 +107,12 @@ export default function Home() {
     const res = await fetch(`/api/documents?clientId=${clientId}`);
     const docs = await res.json();
     setClientDocs(docs);
+  };
+
+  const loadContactDocs = async (contactId: string) => {
+    const res = await fetch(`/api/documents?contactId=${contactId}`);
+    const docs = await res.json();
+    setContactDocs(docs);
   };
 
   useEffect(() => { loadData(); }, []);
@@ -97,6 +129,14 @@ export default function Home() {
       setClientDocs([]);
     }
   }, [selectedClient]);
+
+  useEffect(() => {
+    if (selectedContact) {
+      loadContactDocs(selectedContact.id);
+    } else {
+      setContactDocs([]);
+    }
+  }, [selectedContact]);
 
   const createClient = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,6 +164,18 @@ export default function Home() {
     });
     loadData(search);
   };
+  const createContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await fetch('/api/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(contactData),
+    });
+    setShowContactForm(false);
+    setContactData({ name: '', phone: '', email: '', category: 'familia', birthday: '', address: '', notes: '' });
+    loadData(search);
+  };
+
 
   const saveDocument = async (url: string, filename: string) => {
     if (!selectedClient) return;
@@ -184,6 +236,7 @@ export default function Home() {
         <div className="flex gap-4 mb-6">
           <button onClick={() => setView('clients')} className={`px-6 py-2 rounded-lg font-medium ${view === 'clients' ? 'bg-stone-800 text-white' : 'bg-white text-stone-600 border'}`}>Clientes ({clients.length})</button>
           <button onClick={() => setView('properties')} className={`px-6 py-2 rounded-lg font-medium ${view === 'properties' ? 'bg-amber-600 text-white' : 'bg-white text-stone-600 border'}`}>Propiedades ({properties.length})</button>
+          <button onClick={() => setView('familia')} className={`px-6 py-2 rounded-lg font-medium ${view === 'familia' ? 'bg-rose-600 text-white' : 'bg-white text-stone-600 border'}`}>Familia ({contacts.length})</button>
         </div>
 
         {/* Client Form Modal */}
@@ -247,6 +300,30 @@ export default function Home() {
             </div>
           </div>
         )}
+        {/* Contact Form Modal */}
+        {showContactForm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+              <h2 className="text-xl font-semibold mb-4">Nuevo Contacto</h2>
+              <form onSubmit={createContact} className="space-y-4">
+                <input required placeholder="Nombre completo" value={contactData.name} onChange={e => setContactData({...contactData, name: e.target.value})} className="w-full border rounded p-2" />
+                <input required placeholder="Telefono" value={contactData.phone} onChange={e => setContactData({...contactData, phone: e.target.value})} className="w-full border rounded p-2" />
+                <input placeholder="Email (opcional)" type="email" value={contactData.email} onChange={e => setContactData({...contactData, email: e.target.value})} className="w-full border rounded p-2" />
+                <select value={contactData.category} onChange={e => setContactData({...contactData, category: e.target.value})} className="w-full border rounded p-2">
+                  {CONTACT_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+                <input placeholder="Cumpleaños (opcional)" value={contactData.birthday} onChange={e => setContactData({...contactData, birthday: e.target.value})} className="w-full border rounded p-2" />
+                <input placeholder="Direccion (opcional)" value={contactData.address} onChange={e => setContactData({...contactData, address: e.target.value})} className="w-full border rounded p-2" />
+                <textarea placeholder="Notas (opcional)" value={contactData.notes} onChange={e => setContactData({...contactData, notes: e.target.value})} className="w-full border rounded p-2" rows={3} />
+                <div className="flex gap-2">
+                  <button type="submit" className="flex-1 bg-rose-600 text-white py-2 rounded hover:bg-rose-700">Crear</button>
+                  <button type="button" onClick={() => setShowContactForm(false)} className="flex-1 bg-stone-200 py-2 rounded hover:bg-stone-300">Cancelar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
 
         {/* Client Detail Modal */}
         {selectedClient && (
@@ -398,6 +475,46 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {view === 'familia' && (
+          <div className="grid gap-4">
+            {contacts.length === 0 ? (
+              <div className="text-center text-stone-400 py-12">No hay contactos. Crea el primero.</div>
+            ) : contacts.map(contact => (
+              <div key={contact.id} onClick={() => setSelectedContact(contact)} className="bg-white rounded-lg shadow p-4 hover:shadow-md cursor-pointer transition">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold text-lg">{contact.name}</h3>
+                    <p className="text-stone-500">{JSON.parse(contact.phones).join(' · ')}</p>
+                    {contact.email && <p className="text-stone-400 text-sm">{contact.email}</p>}
+                  </div>
+                  <span className="bg-rose-100 text-rose-600 px-2 py-1 rounded text-sm">{contact.category}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      
+
+        {/* Contact Detail Modal */}
+        {selectedContact && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedContact(null)}>
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <h2 className="text-2xl font-semibold mb-2">{selectedContact.name}</h2>
+              <span className="inline-block bg-rose-100 text-rose-600 px-2 py-1 rounded text-sm mb-4">{selectedContact.category}</span>
+              <div className="space-y-3 mb-4">
+                {JSON.parse(selectedContact.phones).map((phone: string, i: number) => (
+                  <a key={i} href={`tel:${phone}`} className="flex items-center gap-2 text-stone-700 hover:text-rose-600">📞 {phone}</a>
+                ))}
+                {selectedContact.email && <a href={`mailto:${selectedContact.email}`} className="flex items-center gap-2 text-stone-700 hover:text-rose-600">✉️ {selectedContact.email}</a>}
+                {selectedContact.birthday && <p className="text-stone-600">🎂 {selectedContact.birthday}</p>}
+                {selectedContact.address && <p className="text-stone-600">📍 {selectedContact.address}</p>}
+              </div>
+              {selectedContact.notes && <p className="text-stone-600 bg-stone-50 p-3 rounded mb-4">{selectedContact.notes}</p>}
+              <button onClick={() => setSelectedContact(null)} className="w-full mt-4 bg-stone-200 py-2 rounded hover:bg-stone-300">Cerrar</button>
+            </div>
           </div>
         )}
       </main>
