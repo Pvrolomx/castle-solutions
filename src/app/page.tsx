@@ -605,6 +605,7 @@ export default function Home() {
             <button onClick={() => setView('familia')} className={`px-5 py-2 rounded-lg font-medium transition shadow-md ${view === 'familia' ? 'bg-gradient-to-b from-amber-500 to-amber-600 text-white shadow-amber-300' : 'bg-gradient-to-b from-amber-100 to-amber-200 text-amber-800 hover:from-amber-200 hover:to-amber-300'}`}>Familia</button>
             <Link href="/gastos" className="px-5 py-2 rounded-lg font-medium transition shadow-md bg-gradient-to-b from-amber-100 to-amber-200 text-amber-800 hover:from-amber-200 hover:to-amber-300">Gastos</Link>
             <Link href="/calendario" className="px-5 py-2 rounded-lg font-medium transition shadow-md bg-gradient-to-b from-amber-100 to-amber-200 text-amber-800 hover:from-amber-200 hover:to-amber-300">Calendario</Link>
+            <Link href="/contratos" className="px-5 py-2 rounded-lg font-medium transition shadow-md bg-gradient-to-b from-amber-100 to-amber-200 text-amber-800 hover:from-amber-200 hover:to-amber-300">Contratos</Link>
           </div>
           {session?.user && (
             <div className="flex items-center gap-3 mt-3">
