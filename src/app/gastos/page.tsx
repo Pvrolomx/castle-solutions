@@ -33,15 +33,15 @@ interface Expense {
 }
 
 const EXPENSE_TYPES = [
-  { value: 'luz', label: '💡 Luz', color: 'bg-yellow-100 text-yellow-800' },
-  { value: 'agua', label: '💧 Agua', color: 'bg-blue-100 text-blue-800' },
-  { value: 'gas', label: '🔥 Gas', color: 'bg-orange-100 text-orange-800' },
-  { value: 'telefono', label: '📞 Teléfono', color: 'bg-green-100 text-green-800' },
-  { value: 'internet', label: '🌐 Internet', color: 'bg-purple-100 text-purple-800' },
-  { value: 'predial', label: '🏛️ Predial', color: 'bg-red-100 text-red-800' },
-  { value: 'fideicomiso', label: '📜 Fideicomiso', color: 'bg-pink-100 text-pink-800' },
-  { value: 'mantenimiento', label: '🔧 Mantenimiento', color: 'bg-amber-100 text-amber-800' },
-  { value: 'otro', label: '📋 Otro', color: 'bg-stone-100 text-stone-800' },
+  { value: 'luz', label: 'Luz', color: 'bg-yellow-100 text-yellow-800' },
+  { value: 'agua', label: 'Agua', color: 'bg-blue-100 text-blue-800' },
+  { value: 'gas', label: 'Gas', color: 'bg-orange-100 text-orange-800' },
+  { value: 'telefono', label: 'Teléfono', color: 'bg-green-100 text-green-800' },
+  { value: 'internet', label: 'Internet', color: 'bg-purple-100 text-purple-800' },
+  { value: 'predial', label: 'Predial', color: 'bg-red-100 text-red-800' },
+  { value: 'fideicomiso', label: 'Fideicomiso', color: 'bg-pink-100 text-pink-800' },
+  { value: 'mantenimiento', label: 'Mantenimiento', color: 'bg-amber-100 text-amber-800' },
+  { value: 'otro', label: 'Otro', color: 'bg-stone-100 text-stone-800' },
 ];
 
 const PERIODICITIES = [
@@ -164,7 +164,7 @@ export default function GastosPage() {
           <div className="flex items-center gap-4">
             <Link href="/" className="text-2xl font-semibold">CASTLE <span className="text-amber-600 font-light">solutions</span></Link>
             <span className="text-stone-400">|</span>
-            <h1 className="text-xl font-medium">📊 Control de Gastos</h1>
+            <h1 className="text-xl font-medium">Control de Gastos</h1>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-stone-500">{session?.user?.email}</span>
@@ -208,7 +208,7 @@ export default function GastosPage() {
             <input type="month" value={selectedPeriod} onChange={e => setSelectedPeriod(e.target.value)} className="border rounded px-3 py-2 text-sm" />
           </div>
           <div className="flex gap-2">
-            <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">📥 Exportar CSV</button>
+            <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">Exportar CSV</button>
             <button onClick={() => setShowForm(true)} className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 text-sm">+ Agregar Gasto</button>
           </div>
         </div>
@@ -253,9 +253,9 @@ export default function GastosPage() {
                     <td className="px-4 py-3 text-center">
                       <div className="flex justify-center gap-2">
                         {!paid && (
-                          <button onClick={() => markAsPaid(expense)} className="text-green-600 hover:text-green-800 text-sm">💰 Pagar</button>
+                          <button onClick={() => markAsPaid(expense)} className="text-green-600 hover:text-green-800 text-sm">Pagar</button>
                         )}
-                        <button onClick={() => deleteExpense(expense.id)} className="text-red-400 hover:text-red-600 text-sm">🗑️</button>
+                        <button onClick={() => deleteExpense(expense.id)} className="text-red-400 hover:text-red-600 text-sm">Eliminar</button>
                       </div>
                     </td>
                   </tr>
