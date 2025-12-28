@@ -114,6 +114,32 @@ export default function Home() {
   });
   const [contactData, setContactData] = useState({ name: '', phone: '', email: '', category: 'familia', birthday: '', address: '', notes: '' });
 
+  
+
+  const generateClientLink = async (clientId: string, clientName: string) => {
+    const res = await fetch('/api/generate-client-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      setGeneratedLink(data.url);
+      setLinkClientName(clientName);
+      setShowLinkModal(true);
+    }
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(generatedLink);
+    alert('Link copiado!');
+  };
+
+  const shareWhatsApp = () => {
+    const message = encodeURIComponent(`Hola! Aquí está tu estado de cuenta de Castle Solutions:\n${generatedLink}`);
+    window.open(`https://wa.me/?text=${message}`, '_blank');
+  };
+
   const loadData = async (searchTerm = '') => {
     const query = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : '';
     const [clientsRes, propsRes, contactsRes] = await Promise.all([
