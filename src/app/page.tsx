@@ -92,6 +92,7 @@ export default function Home() {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [extracting, setExtracting] = useState(false);
   const [editClientData, setEditClientData] = useState({ name: '', phones: [''], email: '', notes: '' });
   const [editPropertyData, setEditPropertyData] = useState({ name: '', address: '', propertyType: 'casa', regime: 'independiente', condoName: '', condoAdminName: '', condoAdminPhone: '', condoFee: '', notes: '' });
   const [editContactData, setEditContactData] = useState({ name: '', phones: [''], email: '', category: 'familia', birthday: '', address: '', notes: '' });
@@ -164,6 +165,77 @@ export default function Home() {
   const shareViaWhatsApp = (url: string, type: string, name: string) => {
     const message = encodeURIComponent(`${type}: ${name}\n${url}`);
     window.open(`https://wa.me/?text=${message}`, '_blank');
+  };
+
+  const extractFromDocument = async (url: string, type: 'client' | 'property' | 'contact') => {
+    setExtracting(true);
+    try {
+      // First parse PDF to get text
+      const parseRes = await fetch('/api/parse-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+      const parseData = await parseRes.json();
+      
+      if (!parseData.success) {
+        alert('Error al leer el documento');
+        setExtracting(false);
+        return;
+      }
+      
+      // Then extract fields with Ollama
+      const extractRes = await fetch('/api/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: parseData.text, type }),
+      });
+      const extractData = await extractRes.json();
+      
+      if (extractData.success && extractData.data) {
+        if (type === 'client') {
+          setClientData({
+            name: extractData.data.name || '',
+            phone: extractData.data.phone || '',
+            email: extractData.data.email || '',
+            notes: extractData.data.notes || '',
+          });
+        } else if (type === 'property') {
+          setPropertyData(prev => ({
+            ...prev,
+            name: extractData.data.name || prev.name,
+            address: extractData.data.address || prev.address,
+            propertyType: extractData.data.propertyType || prev.propertyType,
+            regime: extractData.data.regime || prev.regime,
+            condoName: extractData.data.condoName || prev.condoName,
+            condoAdminName: extractData.data.condoAdminName || prev.condoAdminName,
+            condoAdminPhone: extractData.data.condoAdminPhone || prev.condoAdminPhone,
+            condoFee: extractData.data.condoFee || prev.condoFee,
+            notes: extractData.data.notes || prev.notes,
+          }));
+        } else if (type === 'contact') {
+          setContactData({
+            name: extractData.data.name || '',
+            phone: extractData.data.phone || '',
+            email: extractData.data.email || '',
+            category: 'familia',
+            birthday: extractData.data.birthday || '',
+            address: extractData.data.address || '',
+            notes: extractData.data.notes || '',
+          });
+        }
+        alert('✅ Datos extraídos con IA');
+      } else {
+        alert(extractData.error || 'No se pudieron extraer datos');
+      }
+    } catch (error) {
+      alert('Error de conexión con Ollama');
+    }
+    setExtracting(false);
+  };
+
+  const handleExtractUpload = async (url: string, type: 'client' | 'property' | 'contact') => {
+    await extractFromDocument(url, type);
   };
 
   const exportClientToPDF = (client: Client) => {
