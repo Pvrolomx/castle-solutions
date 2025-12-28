@@ -94,6 +94,7 @@ export default function Home() {
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [extracting, setExtracting] = useState(false);
+  const [listening, setListening] = useState(false);
   const [editClientData, setEditClientData] = useState({ name: '', phones: [''], email: '', notes: '' });
   const [editPropertyData, setEditPropertyData] = useState({ name: '', address: '', propertyType: 'casa', regime: 'independiente', condoName: '', condoAdminName: '', condoAdminPhone: '', condoFee: '', notes: '' });
   const [editContactData, setEditContactData] = useState({ name: '', phones: [''], email: '', category: 'familia', birthday: '', address: '', notes: '' });
@@ -237,6 +238,32 @@ export default function Home() {
 
   const handleExtractUpload = async (url: string, type: 'client' | 'property' | 'contact') => {
     await extractFromDocument(url, type);
+  };
+
+  const startVoiceSearch = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Tu navegador no soporta búsqueda por voz. Usa Chrome o Edge.');
+      return;
+    }
+    
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    
+    recognition.lang = 'es-MX';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    
+    recognition.onstart = () => setListening(true);
+    recognition.onend = () => setListening(false);
+    recognition.onerror = () => setListening(false);
+    
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setSearch(transcript);
+      loadData(transcript);
+    };
+    
+    recognition.start();
   };
 
   const exportClientToPDF = (client: Client) => {
