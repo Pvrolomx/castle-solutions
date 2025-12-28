@@ -12,7 +12,7 @@ model User {
   email       String   @unique
   password    String
   name        String
-  role        String   @default("admin") // admin, assistant
+  role        String   @default("admin")
   createdAt   DateTime @default(now())
   
   clients     Client[]
@@ -57,10 +57,47 @@ model Property {
   
   client                Client   @relation(fields: [clientId], references: [id])
   photos                Photo[]
+  expenses              Expense[]
   
   @@index([clientId])
   @@index([name])
   @@index([regime])
+}
+
+model Expense {
+  id            String   @id @default(cuid())
+  propertyId    String
+  type          String   // luz, agua, telefono, predial, fideicomiso, gas, internet, mantenimiento, otro
+  name          String   // nombre personalizado si es "otro"
+  amount        Float
+  periodicity   String   @default("mensual") // mensual, bimestral, trimestral, semestral, anual
+  dueDay        Int?     // día del mes que vence (1-31)
+  dueMonth      Int?     // mes que vence (para anuales/semestrales)
+  accountNumber String?  // número de cuenta/servicio
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  property      Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  payments      Payment[]
+  
+  @@index([propertyId])
+  @@index([type])
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  expenseId   String
+  amount      Float
+  paidDate    DateTime
+  period      String   // "2024-01" para enero 2024
+  notes       String?
+  createdAt   DateTime @default(now())
+  
+  expense     Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  
+  @@index([expenseId])
+  @@index([period])
 }
 
 model Photo {

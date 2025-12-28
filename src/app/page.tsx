@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { jsPDF } from 'jspdf';
 
@@ -548,6 +549,7 @@ export default function Home() {
             <button onClick={() => setView('clients')} className={`px-5 py-2 rounded font-medium transition ${view === 'clients' ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'}`}>Clientes</button>
             <button onClick={() => setView('properties')} className={`px-5 py-2 rounded font-medium transition ${view === 'properties' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}>Propiedades</button>
             <button onClick={() => setView('familia')} className={`px-5 py-2 rounded font-medium transition ${view === 'familia' ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-700 hover:bg-rose-200'}`}>Familia</button>
+            <Link href="/gastos" className="px-5 py-2 rounded font-medium transition bg-green-100 text-green-700 hover:bg-green-200">📊 Gastos</Link>
           </div>
         </div>
       </header>
