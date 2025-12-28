@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import InstallPrompt from '@/components/InstallPrompt';
 import { useSession, signOut } from 'next-auth/react';
 import { jsPDF } from 'jspdf';
 
@@ -945,6 +946,7 @@ export default function Home() {
           </div>
         )}
       </main>
+      <InstallPrompt />
     </div>
   );
 }
