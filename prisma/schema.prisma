@@ -182,9 +182,24 @@ model Reservation {
   updatedAt     DateTime @updatedAt
   
   property      Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  documents     GuestDocument[]
   
   @@index([propertyId])
   @@index([checkIn])
   @@index([checkOut])
   @@index([status])
+}
+
+
+model GuestDocument {
+  id            String   @id @default(cuid())
+  reservationId String
+  docType       String   // pasaporte, visa, identificacion, otro
+  filename      String
+  url           String
+  createdAt     DateTime @default(now())
+  
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  
+  @@index([reservationId])
 }
