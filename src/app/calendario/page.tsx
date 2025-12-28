@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { UploadButton } from '@uploadthing/react';
 
 interface Property {
   id: string;
@@ -30,6 +31,14 @@ interface Reservation {
   property: Property;
 }
 
+interface GuestDocument {
+  id: string;
+  reservationId: string;
+  docType: string;
+  filename: string;
+  url: string;
+}
+
 const PLATFORMS = [
   { value: 'airbnb', label: 'Airbnb', color: 'bg-red-100 text-red-800' },
   { value: 'booking', label: 'Booking', color: 'bg-blue-100 text-blue-800' },
@@ -45,6 +54,14 @@ const STATUSES = [
   { value: 'cancelada', label: 'Cancelada', color: 'bg-red-500' },
 ];
 
+const DOC_TYPES = [
+  { value: 'pasaporte', label: 'Pasaporte' },
+  { value: 'visa', label: 'Visa' },
+  { value: 'identificacion', label: 'Identificación' },
+  { value: 'contrato', label: 'Contrato' },
+  { value: 'otro', label: 'Otro' },
+];
+
 const COUNTRIES = ['USA', 'Canada', 'Mexico', 'UK', 'Germany', 'France', 'Spain', 'Australia', 'Brazil', 'Argentina', 'Colombia', 'Otro'];
 
 export default function CalendarioPage() {
@@ -56,6 +73,8 @@ export default function CalendarioPage() {
   const [showForm, setShowForm] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [filterProperty, setFilterProperty] = useState('');
+  const [guestDocs, setGuestDocs] = useState<GuestDocument[]>([]);
+  const [newDocType, setNewDocType] = useState('pasaporte');
   
   const [formData, setFormData] = useState({
     propertyId: '', guestName: '', guestEmail: '', guestPhone: '', guestCountry: '',
@@ -74,6 +93,26 @@ export default function CalendarioPage() {
     setReservations(await resRes.json());
     setProperties(await propRes.json());
     setLoading(false);
+  };
+
+  const loadGuestDocs = async (reservationId: string) => {
+    const res = await fetch(`/api/guest-documents?reservationId=${reservationId}`);
+    const docs = await res.json();
+    setGuestDocs(Array.isArray(docs) ? docs : []);
+  };
+
+  const saveGuestDoc = async (url: string, filename: string, reservationId: string) => {
+    await fetch('/api/guest-documents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reservationId, docType: newDocType, filename, url }),
+    });
+    loadGuestDocs(reservationId);
+  };
+
+  const deleteGuestDoc = async (id: string, reservationId: string) => {
+    await fetch(`/api/guest-documents?id=${id}`, { method: 'DELETE' });
+    loadGuestDocs(reservationId);
   };
 
   const getDaysInMonth = () => {
@@ -98,14 +137,11 @@ export default function CalendarioPage() {
     const method = selectedReservation ? 'PUT' : 'POST';
     const body = selectedReservation ? { ...formData, id: selectedReservation.id } : formData;
     
-    await fetch('/api/reservations', {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    await fetch('/api/reservations', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     
     setShowForm(false);
     setSelectedReservation(null);
+    setGuestDocs([]);
     resetForm();
     loadData();
   };
@@ -114,6 +150,7 @@ export default function CalendarioPage() {
     if (!confirm('¿Eliminar esta reservación?')) return;
     await fetch(`/api/reservations?id=${id}`, { method: 'DELETE' });
     setSelectedReservation(null);
+    setGuestDocs([]);
     loadData();
   };
 
@@ -128,23 +165,17 @@ export default function CalendarioPage() {
   const openEditForm = (r: Reservation) => {
     setSelectedReservation(r);
     setFormData({
-      propertyId: r.propertyId,
-      guestName: r.guestName,
-      guestEmail: r.guestEmail || '',
-      guestPhone: r.guestPhone || '',
-      guestCountry: r.guestCountry || '',
-      guestPassport: r.guestPassport || '',
-      numGuests: String(r.numGuests),
-      checkIn: r.checkIn.split('T')[0],
-      checkOut: r.checkOut.split('T')[0],
-      platform: r.platform,
-      status: r.status,
+      propertyId: r.propertyId, guestName: r.guestName, guestEmail: r.guestEmail || '',
+      guestPhone: r.guestPhone || '', guestCountry: r.guestCountry || '',
+      guestPassport: r.guestPassport || '', numGuests: String(r.numGuests),
+      checkIn: r.checkIn.split('T')[0], checkOut: r.checkOut.split('T')[0],
+      platform: r.platform, status: r.status,
       totalAmount: r.totalAmount ? String(r.totalAmount) : '',
       paidAmount: r.paidAmount ? String(r.paidAmount) : '',
-      currency: r.currency,
-      notes: r.notes || ''
+      currency: r.currency, notes: r.notes || ''
     });
     setShowForm(true);
+    loadGuestDocs(r.id);
   };
 
   const { firstDay, daysInMonth } = getDaysInMonth();
@@ -152,7 +183,7 @@ export default function CalendarioPage() {
 
   const totalIncome = reservations.reduce((sum, r) => sum + (r.totalAmount || 0), 0);
   const occupiedDays = new Set(reservations.flatMap(r => {
-    const days = [];
+    const days: number[] = [];
     const start = new Date(r.checkIn);
     const end = new Date(r.checkOut);
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
@@ -180,27 +211,13 @@ export default function CalendarioPage() {
       </header>
 
       <main className="max-w-7xl mx-auto p-6">
-        {/* Stats */}
         <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <p className="text-sm text-stone-500">Reservaciones</p>
-            <p className="text-2xl font-semibold">{reservations.length}</p>
-          </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <p className="text-sm text-stone-500">Ingresos del Mes</p>
-            <p className="text-2xl font-semibold text-green-600">${totalIncome.toLocaleString()}</p>
-          </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <p className="text-sm text-stone-500">Días Ocupados</p>
-            <p className="text-2xl font-semibold text-amber-600">{occupiedDays}</p>
-          </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <p className="text-sm text-stone-500">Ocupación</p>
-            <p className="text-2xl font-semibold">{Math.round((occupiedDays / daysInMonth) * 100)}%</p>
-          </div>
+          <div className="bg-white rounded-lg p-4 shadow-sm"><p className="text-sm text-stone-500">Reservaciones</p><p className="text-2xl font-semibold">{reservations.length}</p></div>
+          <div className="bg-white rounded-lg p-4 shadow-sm"><p className="text-sm text-stone-500">Ingresos del Mes</p><p className="text-2xl font-semibold text-green-600">${totalIncome.toLocaleString()}</p></div>
+          <div className="bg-white rounded-lg p-4 shadow-sm"><p className="text-sm text-stone-500">Días Ocupados</p><p className="text-2xl font-semibold text-amber-600">{occupiedDays}</p></div>
+          <div className="bg-white rounded-lg p-4 shadow-sm"><p className="text-sm text-stone-500">Ocupación</p><p className="text-2xl font-semibold">{Math.round((occupiedDays / daysInMonth) * 100)}%</p></div>
         </div>
 
-        {/* Controls */}
         <div className="bg-white rounded-lg p-4 shadow-sm mb-6 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))} className="p-2 hover:bg-stone-100 rounded">←</button>
@@ -212,11 +229,10 @@ export default function CalendarioPage() {
               <option value="">Todas las propiedades</option>
               {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
-            <button onClick={() => { resetForm(); setSelectedReservation(null); setShowForm(true); }} className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 text-sm">+ Nueva Reservación</button>
+            <button onClick={() => { resetForm(); setSelectedReservation(null); setGuestDocs([]); setShowForm(true); }} className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 text-sm">+ Nueva Reservación</button>
           </div>
         </div>
 
-        {/* Calendar Grid */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="grid grid-cols-7 bg-stone-100">
             {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => (
@@ -246,10 +262,9 @@ export default function CalendarioPage() {
           </div>
         </div>
 
-        {/* Reservation Form Modal */}
         {showForm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto py-8">
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl mx-4">
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
               <h2 className="text-xl font-semibold mb-4">{selectedReservation ? 'Editar' : 'Nueva'} Reservación</h2>
               <form onSubmit={submitReservation} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -276,57 +291,46 @@ export default function CalendarioPage() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Check-in *</label>
-                    <input required type="date" value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} className="w-full border rounded p-2" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Check-out *</label>
-                    <input required type="date" value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} className="w-full border rounded p-2" />
-                  </div>
+                  <div><label className="block text-sm font-medium mb-1">Check-in *</label><input required type="date" value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} className="w-full border rounded p-2" /></div>
+                  <div><label className="block text-sm font-medium mb-1">Check-out *</label><input required type="date" value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} className="w-full border rounded p-2" /></div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Plataforma</label>
-                    <select value={formData.platform} onChange={e => setFormData({...formData, platform: e.target.value})} className="w-full border rounded p-2">
-                      {PLATFORMS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Status</label>
-                    <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} className="w-full border rounded p-2">
-                      {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                    </select>
-                  </div>
+                  <div><label className="block text-sm font-medium mb-1">Plataforma</label><select value={formData.platform} onChange={e => setFormData({...formData, platform: e.target.value})} className="w-full border rounded p-2">{PLATFORMS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}</select></div>
+                  <div><label className="block text-sm font-medium mb-1">Status</label><select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} className="w-full border rounded p-2">{STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}</select></div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Monto Total</label>
-                    <div className="flex gap-2">
-                      <input type="number" step="0.01" placeholder="0.00" value={formData.totalAmount} onChange={e => setFormData({...formData, totalAmount: e.target.value})} className="flex-1 border rounded p-2" />
-                      <select value={formData.currency} onChange={e => setFormData({...formData, currency: e.target.value})} className="w-20 border rounded p-2">
-                        <option value="MXN">MXN</option>
-                        <option value="USD">USD</option>
-                      </select>
+                  <div><label className="block text-sm font-medium mb-1">Monto Total</label><div className="flex gap-2"><input type="number" step="0.01" placeholder="0.00" value={formData.totalAmount} onChange={e => setFormData({...formData, totalAmount: e.target.value})} className="flex-1 border rounded p-2" /><select value={formData.currency} onChange={e => setFormData({...formData, currency: e.target.value})} className="w-20 border rounded p-2"><option value="MXN">MXN</option><option value="USD">USD</option></select></div></div>
+                  <div><label className="block text-sm font-medium mb-1">Monto Pagado</label><input type="number" step="0.01" placeholder="0.00" value={formData.paidAmount} onChange={e => setFormData({...formData, paidAmount: e.target.value})} className="w-full border rounded p-2" /></div>
+
+                  <div className="col-span-2"><label className="block text-sm font-medium mb-1">Notas</label><textarea placeholder="Notas adicionales..." value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className="w-full border rounded p-2" rows={2} /></div>
+
+                  {selectedReservation && (
+                    <div className="col-span-2 bg-blue-50 p-3 rounded-lg">
+                      <p className="text-sm font-medium text-blue-700 mb-2">Documentos del Huésped</p>
+                      {guestDocs.length > 0 && (
+                        <div className="mb-3 space-y-2">
+                          {guestDocs.map(doc => (
+                            <div key={doc.id} className="flex items-center justify-between bg-white p-2 rounded text-sm">
+                              <div className="flex items-center gap-2">
+                                <span className="text-blue-600">📄</span>
+                                <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{doc.filename}</a>
+                                <span className="text-xs text-stone-400">({doc.docType})</span>
+                              </div>
+                              <button type="button" onClick={() => deleteGuestDoc(doc.id, selectedReservation.id)} className="text-red-400 hover:text-red-600">✕</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex gap-2 items-center">
+                        <select value={newDocType} onChange={e => setNewDocType(e.target.value)} className="border rounded p-2 text-sm">{DOC_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select>
+                        <UploadButton endpoint="documentUploader" onClientUploadComplete={(res) => { if (res && res[0] && selectedReservation) saveGuestDoc(res[0].url, res[0].name, selectedReservation.id); }} onUploadError={(error: Error) => alert(`Error: ${error.message}`)} appearance={{ button: { background: '#2563eb', padding: '8px 16px', fontSize: '12px' } }} />
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Monto Pagado</label>
-                    <input type="number" step="0.01" placeholder="0.00" value={formData.paidAmount} onChange={e => setFormData({...formData, paidAmount: e.target.value})} className="w-full border rounded p-2" />
-                  </div>
-
-                  <div className="col-span-2">
-                    <label className="block text-sm font-medium mb-1">Notas</label>
-                    <textarea placeholder="Notas adicionales..." value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className="w-full border rounded p-2" rows={2} />
-                  </div>
+                  )}
                 </div>
 
                 <div className="flex gap-2 pt-2">
-                  <button type="submit" className="flex-1 bg-amber-600 text-white py-2 rounded hover:bg-amber-700">
-                    {selectedReservation ? 'Guardar Cambios' : 'Crear Reservación'}
-                  </button>
-                  {selectedReservation && (
-                    <button type="button" onClick={() => deleteReservation(selectedReservation.id)} className="px-4 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200">Eliminar</button>
-                  )}
-                  <button type="button" onClick={() => { setShowForm(false); setSelectedReservation(null); }} className="px-4 py-2 bg-stone-200 rounded hover:bg-stone-300">Cancelar</button>
+                  <button type="submit" className="flex-1 bg-amber-600 text-white py-2 rounded hover:bg-amber-700">{selectedReservation ? 'Guardar Cambios' : 'Crear Reservación'}</button>
+                  {selectedReservation && <button type="button" onClick={() => deleteReservation(selectedReservation.id)} className="px-4 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200">Eliminar</button>}
+                  <button type="button" onClick={() => { setShowForm(false); setSelectedReservation(null); setGuestDocs([]); }} className="px-4 py-2 bg-stone-200 rounded hover:bg-stone-300">Cancelar</button>
                 </div>
               </form>
             </div>
