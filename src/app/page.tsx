@@ -578,6 +578,12 @@ export default function Home() {
             <button onClick={() => setView('familia')} className={`px-5 py-2 rounded font-medium transition ${view === 'familia' ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-700 hover:bg-rose-200'}`}>Familia</button>
             <Link href="/gastos" className="px-5 py-2 rounded font-medium transition bg-green-100 text-green-700 hover:bg-green-200">📊 Gastos</Link>
           </div>
+          {session?.user && (
+            <div className="flex items-center gap-3 mt-3">
+              <span className="text-sm text-stone-500">{session.user.email}</span>
+              <button onClick={() => signOut()} className="text-sm text-red-500 hover:text-red-700 font-medium">Cerrar sesión</button>
+            </div>
+          )}
         </div>
       </header>
 
