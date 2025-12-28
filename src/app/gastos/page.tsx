@@ -68,6 +68,10 @@ export default function GastosPage() {
 
   const currentMonth = new Date().toISOString().slice(0, 7);
   const [selectedPeriod, setSelectedPeriod] = useState(currentMonth);
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [reminderEmail, setReminderEmail] = useState('');
+  const [reminderPhone, setReminderPhone] = useState('');
+  const [sendingReminder, setSendingReminder] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -155,6 +159,33 @@ export default function GastosPage() {
     a.click();
   };
 
+  const sendReminders = async () => {
+    setSendingReminder(true);
+    try {
+      const res = await fetch('/api/reminders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: reminderEmail, phone: reminderPhone }),
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        let message = 'Recordatorios procesados!';
+        if (data.results?.email === 'sent') message += ' Email enviado.';
+        if (data.results?.whatsapp) {
+          window.open(data.results.whatsapp, '_blank');
+        }
+        alert(message);
+        setShowReminderModal(false);
+      } else {
+        alert(data.message || 'No hay gastos próximos a vencer');
+      }
+    } catch (error) {
+      alert('Error al enviar recordatorios');
+    }
+    setSendingReminder(false);
+  };
+
   if (loading) return <div className="min-h-screen bg-stone-50 flex items-center justify-center"><p>Cargando...</p></div>;
 
   return (
@@ -208,6 +239,7 @@ export default function GastosPage() {
             <input type="month" value={selectedPeriod} onChange={e => setSelectedPeriod(e.target.value)} className="border rounded px-3 py-2 text-sm" />
           </div>
           <div className="flex gap-2">
+            <button onClick={() => setShowReminderModal(true)} className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 text-sm">Recordatorios</button>
             <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">Exportar CSV</button>
             <button onClick={() => setShowForm(true)} className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 text-sm">+ Agregar Gasto</button>
           </div>
