@@ -22,15 +22,18 @@ model User {
 }
 
 model Client {
-  id          String     @id @default(cuid())
-  name        String
-  phones      String
-  email       String?
-  notes       String?
-  userId      String?
-  accessToken String?    @unique
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id              String     @id @default(cuid())
+  name            String
+  phones          String
+  email           String?
+  notes           String?
+  userId          String?
+  accessToken     String?    @unique
+  commissionType  String     @default("percentage") // percentage, fixed
+  commissionRate  Float      @default(15) // 15% or fixed amount
+  cutoffDay       Int        @default(1) // day of month for billing
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
   
   user        User?      @relation(fields: [userId], references: [id])
   properties  Property[]
@@ -232,4 +235,26 @@ model Contract {
   
   @@index([templateId])
   @@index([reservationId])
+}
+
+
+model Invoice {
+  id            String   @id @default(cuid())
+  clientId      String
+  period        String   // "2024-12"
+  totalIncome   Float
+  totalExpenses Float
+  commission    Float
+  netAmount     Float    // amount to pay to client
+  status        String   @default("draft") // draft, sent, paid
+  sentAt        DateTime?
+  paidAt        DateTime?
+  pdfUrl        String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  
+  @@unique([clientId, period])
+  @@index([clientId])
+  @@index([period])
+  @@index([status])
 }
