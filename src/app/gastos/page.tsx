@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
 
 interface Property {
   id: string;
@@ -322,6 +323,7 @@ export default function GastosPage() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }

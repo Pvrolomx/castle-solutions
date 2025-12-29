@@ -8,6 +8,7 @@ import { jsPDF } from 'jspdf';
 
 import { UploadButton } from '@/lib/uploadthing';
 import '@uploadthing/react/styles.css';
+import Footer from '@/components/Footer';
 
 interface Document {
   id: string;
@@ -975,6 +976,7 @@ export default function Home() {
           </div>
         )}
       </main>
+      <Footer />
       <InstallPrompt />
     </div>
   );

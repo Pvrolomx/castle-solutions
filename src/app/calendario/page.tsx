@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { UploadButton } from '@uploadthing/react';
 import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
 
 interface Property {
   id: string;
@@ -326,6 +327,7 @@ export default function CalendarioPage() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }

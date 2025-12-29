@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
 
 interface Client {
   id: string;
@@ -258,6 +259,7 @@ export default function FacturacionPage() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }
