@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import Navigation from '@/components/Navigation';
 
 interface Property {
   id: string;
@@ -190,19 +191,7 @@ export default function GastosPage() {
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <header className="bg-white border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-2xl font-semibold">CASTLE <span className="text-amber-600 font-light">solutions</span></Link>
-            <span className="text-stone-400">|</span>
-            <h1 className="text-xl font-medium">Control de Gastos</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-stone-500">{session?.user?.email}</span>
-            <Link href="/" className="text-sm text-stone-400 hover:text-stone-600">← Volver</Link>
-          </div>
-        </div>
-      </header>
+      <Navigation />
 
       <main className="max-w-7xl mx-auto p-6">
         {/* Stats Cards */}
