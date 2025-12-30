@@ -258,3 +258,49 @@ model Invoice {
   @@index([period])
   @@index([status])
 }
+
+
+model ChatRoom {
+  id          String   @id @default(cuid())
+  name        String?
+  type        String   @default("direct")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  participants ChatParticipant[]
+  messages     ChatMessage[]
+  
+  @@index([type])
+}
+
+model ChatParticipant {
+  id        String   @id @default(cuid())
+  roomId    String
+  name      String
+  role      String   @default("member")
+  joinedAt  DateTime @default(now())
+  lastRead  DateTime @default(now())
+  
+  room      ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+  
+  @@unique([roomId, name])
+  @@index([roomId])
+}
+
+model ChatMessage {
+  id            String   @id @default(cuid())
+  roomId        String
+  participantId String
+  content       String
+  type          String   @default("text")
+  fileUrl       String?
+  createdAt     DateTime @default(now())
+  
+  room        ChatRoom        @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  participant ChatParticipant @relation(fields: [participantId], references: [id])
+  
+  @@index([roomId])
+  @@index([participantId])
+  @@index([createdAt])
+}
