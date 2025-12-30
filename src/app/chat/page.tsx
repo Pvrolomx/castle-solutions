@@ -148,10 +148,18 @@ export default function ChatPage() {
               <p className="text-xs text-stone-400">{userName}</p>
             </div>
           </div>
-          <button onClick={() => setShowNewRoomModal(true)}
-            className="bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-600">
-            + Nuevo Grupo
-          </button>
+          <div className="flex gap-2">
+            <Link href="/videocall" className="bg-green-500 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-green-600 flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Video
+            </Link>
+            <button onClick={() => setShowNewRoomModal(true)}
+              className="bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-600">
+              + Grupo
+            </button>
+          </div>
         </div>
       </header>
 

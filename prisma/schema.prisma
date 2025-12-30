@@ -304,3 +304,32 @@ model ChatMessage {
   @@index([participantId])
   @@index([createdAt])
 }
+
+
+model VideoCall {
+  id          String   @id @default(cuid())
+  roomCode    String   @unique
+  creatorName String
+  status      String   @default("waiting")
+  offer       String?  @db.Text
+  answer      String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  candidates  IceCandidate[]
+  
+  @@index([roomCode])
+  @@index([status])
+}
+
+model IceCandidate {
+  id          String   @id @default(cuid())
+  callId      String
+  fromUser    String
+  candidate   String   @db.Text
+  createdAt   DateTime @default(now())
+  
+  call        VideoCall @relation(fields: [callId], references: [id], onDelete: Cascade)
+  
+  @@index([callId])
+}
